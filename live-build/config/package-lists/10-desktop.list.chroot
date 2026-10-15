@@ -3,7 +3,6 @@ task-kde-desktop
 kde-plasma-desktop
 sddm
 sddm-theme-breeze
-plasma-workspace-wayland
 xwayland
 konsole
 yakuake

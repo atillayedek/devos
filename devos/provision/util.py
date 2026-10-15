@@ -333,6 +333,7 @@ def link_bins(src_dir: Path, names: Iterable[str]) -> None:
 
 def make_group_writable(path: Path) -> None:
     """Shared SDKs (Android, Flutter, Rust) must be updatable by developers."""
+    ensure_group(paths.DEV_GROUP)
     run(["chgrp", "-R", paths.DEV_GROUP, str(path)])
     run(["chmod", "-R", "g+rwX", str(path)])
     run(["find", str(path), "-type", "d", "-exec", "chmod", "g+s", "{}", "+"])

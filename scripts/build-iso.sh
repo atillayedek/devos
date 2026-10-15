@@ -48,7 +48,7 @@ JSON
 for m in online offline; do
   rsvg-convert -w 640 -h 400 "$SRC/branding/calamares/mode-$m.svg" -o "$INC/usr/share/devos/branding/mode-$m.png"
 done
-CB="$INC/etc/calamares/branding/devos"
+CB="$INC/usr/share/devos/overrides/etc/calamares/branding/devos"
 install -d "$CB"
 install -m 0644 "$SRC/branding/calamares/branding.desc" "$SRC/branding/calamares/show.qml" "$CB/"
 rsvg-convert -w 256 -h 256 "$SRC/branding/logo.svg" -o "$CB/logo.png"

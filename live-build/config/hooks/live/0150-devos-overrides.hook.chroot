@@ -1,0 +1,6 @@
+#!/bin/sh
+# Files that replace configuration owned by Debian packages (Calamares settings, Debian's
+# "Install Debian" icon autostart). live-build copies includes.chroot *before* installing
+# packages, so these are applied here, after all packages are installed.
+set -e
+cp -a /usr/share/devos/overrides/. /

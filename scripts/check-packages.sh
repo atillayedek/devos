@@ -31,4 +31,13 @@ while read -r pkg; do
   fi
 done < <(cat "$LISTS_DIR"/*.list.chroot | sed 's/#.*//' | tr -s ' \t' '\n' | grep -v '^$' | sort -u)
 echo "missing=$missing"
+echo "== simulating installation of all lists together (dependency resolution)"
+pkgs=$(cat "$LISTS_DIR"/*.list.chroot | sed 's/#.*//' | tr -s ' 	' '
+' | grep -v '^$' | sort -u)
+if ! apt-get install -s -y $pkgs > /tmp/sim.log 2>&1; then
+  grep -E "^E:|has no installation candidate|but it is not|Depends:|Conflicts" /tmp/sim.log | head -40
+  missing=$((missing+1))
+else
+  echo "simulation OK: $(grep -c '^Inst ' /tmp/sim.log) packages would be installed"
+fi
 exit $(( missing > 0 ))
