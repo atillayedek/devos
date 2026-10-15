@@ -48,6 +48,8 @@ def virsh(*args: str, check: bool = False) -> subprocess.CompletedProcess:
 
 
 def state() -> str:
+    if not shutil.which("virsh"):
+        return "unavailable (libvirt not installed)"
     res = virsh("domstate", VM_NAME)
     return res.stdout.strip() if res.returncode == 0 else "not created"
 
