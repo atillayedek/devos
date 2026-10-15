@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=DevOS developer environment check
+Exec=/usr/bin/devos-firstboot
+NoDisplay=true
+X-KDE-autostart-phase=2
+X-KDE-AutostartScript=true

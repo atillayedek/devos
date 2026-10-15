@@ -1,0 +1,11 @@
+[Default Applications]
+application/x-ms-dos-executable=devos-winapp.desktop
+application/x-msdownload=devos-winapp.desktop
+application/x-msdos-program=devos-winapp.desktop
+application/vnd.microsoft.portable-executable=devos-winapp.desktop
+application/x-msi=devos-winapp.desktop
+application/x-ms-installer=devos-winapp.desktop
+application/x-wine-extension-msi=devos-winapp.desktop
+x-scheme-handler/http=google-chrome.desktop;firefox-esr.desktop;
+x-scheme-handler/https=google-chrome.desktop;firefox-esr.desktop;
+text/html=google-chrome.desktop;firefox-esr.desktop;

@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+import sys
+from devos.gui.vibe_app import main
+sys.exit(main())

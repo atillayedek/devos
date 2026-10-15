@@ -1,0 +1,1058 @@
+# DevOS tool manifest — the single source of truth for what a DevOS Full
+# installation contains, how each tool is installed, whether its license allows
+# shipping it inside the ISO, and how its health is verified.
+#
+# Fields
+#   id               unique key
+#   name             display name
+#   category         grouping used by Developer Center
+#   stage            provisioning stage (see `stages` below, executed in order)
+#   required         counts towards "Developer Environment: READY"
+#   redistributable  true  -> may be baked into DevOS-Full-Offline.iso
+#                    false -> fetched from the vendor's official source at install
+#                             time (or later from Developer Center), never shipped
+#   license          short license note shown in Developer Center / installer
+#   license_url      vendor license the user accepts by choosing Full Online
+#   install          how to install it:
+#                      method: apt        -> packages from the Debian archive (baked into every ISO)
+#                      method: apt-repo   -> vendor apt repository (repo key in `repos`)
+#                      method: handler    -> Python handler in devos/provision/handlers.py
+#                      method: npm        -> npm global package into /opt/devos/npm
+#                      method: uv-tool    -> Python CLI isolated by `uv tool install`
+#                      method: flatpak    -> Flathub application (system-wide)
+#   health           list of checks; ALL must pass for status "Working"
+#                      cmd:     argv run as the logged-in user (exit 0 required)
+#                      expect:  optional regex the combined output must match
+#                      desktop: desktop file id that must exist with a runnable Exec
+#                      special: kvm | network | docker | podman | flutter | android-sdk | jetbrains:<dir> | flatpak:<appid>
+#   desktop          desktop entry id shown in the menu (for launch from Developer Center)
+
+stages:
+  - packages        # 5. development packages (Debian archive, already on the ISO)
+  - languages       # 6. programming languages
+  - android         # 7. Android SDK + Android Studio
+  - flutter         # 8. Flutter
+  - containers      # 9. containers
+  - virtualization  # 10. virtualization
+  - windows         # 11. Wine / Bottles
+  - browsers        # 12. browsers
+  - ides            # 13. IDEs
+  - jetbrains       # 14. JetBrains
+  - ai              # 15. AI CLI tools
+  - cloud           # 16. cloud CLIs
+  - git             # 17. Git tooling
+  - environment     # 18. environment variables
+  - desktop         # 19. desktop entries
+  - health          # 20. health checks
+  - cleanup         # 21. caches cleanup
+  - snapshot        # 22. final snapshot
+
+repos:
+  vscode:
+    url: https://packages.microsoft.com/repos/code
+    suite: stable
+    components: main
+    arch: amd64
+    key_url: https://packages.microsoft.com/keys/microsoft.asc
+  vscodium:
+    url: https://download.vscodium.com/debs
+    suite: vscodium
+    components: main
+    arch: amd64
+    key_url: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg
+  google-chrome:
+    url: https://dl.google.com/linux/chrome/deb/
+    suite: stable
+    components: main
+    arch: amd64
+    key_url: https://dl.google.com/linux/linux_signing_key.pub
+    list_name: google-chrome
+  dbeaver:
+    url: https://dbeaver.io/debs/dbeaver-ce
+    suite: /
+    components: ""
+    key_url: https://dbeaver.io/debs/dbeaver.gpg.key
+  google-cloud:
+    url: https://packages.cloud.google.com/apt
+    suite: cloud-sdk
+    components: main
+    key_url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+  cloudflare:
+    url: https://pkg.cloudflare.com/cloudflared
+    suite: any
+    components: main
+    key_url: https://pkg.cloudflare.com/cloudflare-main.gpg
+  winehq:
+    url: https://dl.winehq.org/wine-builds/debian/
+    suite: trixie
+    components: main
+    arch: amd64,i386
+    key_url: https://dl.winehq.org/wine-builds/winehq.key
+
+tools:
+  # ---------------------------------------------------------------- editors
+  - id: vscode
+    name: Visual Studio Code
+    category: Editors & IDEs
+    stage: ides
+    required: true
+    redistributable: false
+    license: Microsoft Software License (proprietary build)
+    license_url: https://code.visualstudio.com/license
+    install: {method: apt-repo, repo: vscode, packages: [code], debconf: ["code code/add-microsoft-repo boolean false"]}
+    health:
+      - cmd: [code, --version]
+      - desktop: code.desktop
+    desktop: code.desktop
+
+  - id: vscodium
+    name: VSCodium
+    category: Editors & IDEs
+    stage: ides
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: apt-repo, repo: vscodium, packages: [codium]}
+    health:
+      - cmd: [codium, --version]
+      - desktop: codium.desktop
+    desktop: codium.desktop
+
+  - id: neovim
+    name: Neovim
+    category: Editors & IDEs
+    stage: packages
+    required: false
+    redistributable: true
+    license: Apache-2.0 / Vim
+    install: {method: apt, packages: [neovim]}
+    health: [{cmd: [nvim, --version]}]
+
+  - id: vim
+    name: Vim
+    category: Editors & IDEs
+    stage: packages
+    required: false
+    redistributable: true
+    license: Vim
+    install: {method: apt, packages: [vim]}
+    health: [{cmd: [vim, --version]}]
+
+  - id: emacs
+    name: GNU Emacs
+    category: Editors & IDEs
+    stage: packages
+    required: false
+    redistributable: true
+    license: GPL-3.0
+    install: {method: apt, packages: [emacs]}
+    health: [{cmd: [emacs, --version]}]
+
+  - id: kate
+    name: Kate
+    category: Editors & IDEs
+    stage: packages
+    required: false
+    redistributable: true
+    license: LGPL
+    install: {method: apt, packages: [kate]}
+    health: [{desktop: org.kde.kate.desktop}]
+    desktop: org.kde.kate.desktop
+
+  # -------------------------------------------------------------- JetBrains
+  - id: jetbrains-toolbox
+    name: JetBrains Toolbox
+    category: JetBrains
+    stage: jetbrains
+    required: false
+    redistributable: false
+    license: JetBrains Toolbox Subscription Agreement
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: TBA, dir: jetbrains-toolbox}
+    health:
+      - special: "path:/opt/jetbrains/jetbrains-toolbox/bin/jetbrains-toolbox"
+      - desktop: devos-jetbrains-toolbox.desktop
+    desktop: devos-jetbrains-toolbox.desktop
+
+  - id: intellij-idea
+    name: IntelliJ IDEA
+    category: JetBrains
+    stage: jetbrains
+    required: true
+    redistributable: false
+    license: JetBrains EULA (free core features; Ultimate features need the user's own subscription)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: IIU, fallback_product: IIC, dir: intellij-idea}
+    health:
+      - special: "jetbrains:intellij-idea"
+      - desktop: devos-intellij-idea.desktop
+    desktop: devos-intellij-idea.desktop
+
+  - id: pycharm
+    name: PyCharm
+    category: JetBrains
+    stage: jetbrains
+    required: true
+    redistributable: false
+    license: JetBrains EULA (free core features; Pro features need the user's own subscription)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: PCP, fallback_product: PCC, dir: pycharm}
+    health:
+      - special: "jetbrains:pycharm"
+      - desktop: devos-pycharm.desktop
+    desktop: devos-pycharm.desktop
+
+  - id: webstorm
+    name: WebStorm
+    category: JetBrains
+    stage: jetbrains
+    required: true
+    redistributable: false
+    license: JetBrains EULA (free for non-commercial use; commercial use needs a license)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: WS, dir: webstorm}
+    health:
+      - special: "jetbrains:webstorm"
+      - desktop: devos-webstorm.desktop
+    desktop: devos-webstorm.desktop
+
+  - id: phpstorm
+    name: PhpStorm
+    category: JetBrains
+    stage: jetbrains
+    required: false
+    redistributable: false
+    license: JetBrains EULA (subscription; 30-day trial)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: PS, dir: phpstorm}
+    health:
+      - special: "jetbrains:phpstorm"
+      - desktop: devos-phpstorm.desktop
+    desktop: devos-phpstorm.desktop
+
+  - id: clion
+    name: CLion
+    category: JetBrains
+    stage: jetbrains
+    required: true
+    redistributable: false
+    license: JetBrains EULA (free for non-commercial use; commercial use needs a license)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: CL, dir: clion}
+    health:
+      - special: "jetbrains:clion"
+      - desktop: devos-clion.desktop
+    desktop: devos-clion.desktop
+
+  - id: goland
+    name: GoLand
+    category: JetBrains
+    stage: jetbrains
+    required: false
+    redistributable: false
+    license: JetBrains EULA (subscription; 30-day trial)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: GO, dir: goland}
+    health:
+      - special: "jetbrains:goland"
+      - desktop: devos-goland.desktop
+    desktop: devos-goland.desktop
+
+  - id: rider
+    name: Rider
+    category: JetBrains
+    stage: jetbrains
+    required: true
+    redistributable: false
+    license: JetBrains EULA (free for non-commercial use; commercial use needs a license)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: RD, dir: rider}
+    health:
+      - special: "jetbrains:rider"
+      - desktop: devos-rider.desktop
+    desktop: devos-rider.desktop
+
+  - id: datagrip
+    name: DataGrip
+    category: JetBrains
+    stage: jetbrains
+    required: false
+    redistributable: false
+    license: JetBrains EULA (free for non-commercial use; commercial use needs a license)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: DG, dir: datagrip}
+    health:
+      - special: "jetbrains:datagrip"
+      - desktop: devos-datagrip.desktop
+    desktop: devos-datagrip.desktop
+
+  - id: rustrover
+    name: RustRover
+    category: JetBrains
+    stage: jetbrains
+    required: false
+    redistributable: false
+    license: JetBrains EULA (free for non-commercial use; commercial use needs a license)
+    license_url: https://www.jetbrains.com/legal/docs/toolbox/user/
+    install: {method: handler, handler: jetbrains, product: RR, dir: rustrover}
+    health:
+      - special: "jetbrains:rustrover"
+      - desktop: devos-rustrover.desktop
+    desktop: devos-rustrover.desktop
+
+  # ---------------------------------------------------------------- Android
+  - id: android-sdk
+    name: Android SDK (cmdline-tools, platform-tools, build-tools, platform, emulator, NDK, CMake)
+    category: Android
+    stage: android
+    required: true
+    redistributable: false
+    license: Android Software Development Kit License Agreement
+    license_url: https://developer.android.com/studio/terms
+    install: {method: handler, handler: android_sdk}
+    health:
+      - special: android-sdk
+      - cmd: [adb, version]
+      - cmd: [fastboot, --version]
+      - cmd: [sdkmanager, --version]
+
+  - id: android-emulator-image
+    name: Android Emulator system image + AVD
+    category: Android
+    stage: android
+    required: false
+    redistributable: false
+    license: Android Software Development Kit License Agreement
+    license_url: https://developer.android.com/studio/terms
+    install: {method: handler, handler: android_system_image}
+    health:
+      - cmd: [emulator, -list-avds]
+        expect: "\\S"
+
+  - id: android-studio
+    name: Android Studio
+    category: Android
+    stage: android
+    required: true
+    redistributable: false
+    license: Android Studio Terms and Conditions
+    license_url: https://developer.android.com/studio/terms
+    install: {method: handler, handler: android_studio}
+    health:
+      - special: "jetbrains:android-studio"
+      - desktop: devos-android-studio.desktop
+    desktop: devos-android-studio.desktop
+
+  - id: android-udev
+    name: Android USB udev rules
+    category: Android
+    stage: packages
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: apt, packages: [android-sdk-platform-tools-common]}
+    health:
+      - special: "path:/usr/lib/udev/rules.d/51-android.rules"
+
+  # ---------------------------------------------------------------- Flutter
+  - id: flutter
+    name: Flutter SDK (+ Dart)
+    category: Mobile & Cross-platform
+    stage: flutter
+    required: true
+    redistributable: true
+    license: BSD-3-Clause
+    install: {method: handler, handler: flutter}
+    health:
+      - cmd: [flutter, --version]
+      - cmd: [dart, --version]
+      - special: flutter
+
+  # ------------------------------------------------------------------ Web
+  - id: node
+    name: Node.js LTS (npm, npx)
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: node}
+    health:
+      - cmd: [node, --version]
+      - cmd: [npm, --version]
+
+  - id: pnpm
+    name: pnpm
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: npm, packages: [pnpm]}
+    health: [{cmd: [pnpm, --version]}]
+
+  - id: yarn
+    name: Yarn
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: BSD-2-Clause
+    install: {method: npm, packages: [yarn]}
+    health: [{cmd: [yarn, --version]}]
+
+  - id: typescript
+    name: TypeScript
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: npm, packages: [typescript, ts-node]}
+    health: [{cmd: [tsc, --version]}]
+
+  - id: bun
+    name: Bun
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: bun}
+    health: [{cmd: [bun, --version]}]
+
+  - id: deno
+    name: Deno
+    category: Web
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: deno}
+    health: [{cmd: [deno, --version]}]
+
+  - id: mkcert
+    name: mkcert (local HTTPS)
+    category: Web
+    stage: packages
+    required: false
+    redistributable: true
+    license: BSD-3-Clause
+    install: {method: apt, packages: [mkcert, libnss3-tools]}
+    health: [{cmd: [mkcert, -help]}]
+
+  # --------------------------------------------------------------- Python
+  - id: python
+    name: Python 3 (pip, venv, pipx, virtualenv, debugpy)
+    category: Python
+    stage: packages
+    required: true
+    redistributable: true
+    license: PSF
+    install: {method: apt, packages: [python3, python3-pip, python3-venv, pipx, python3-virtualenv, python3-debugpy]}
+    health:
+      - cmd: [python3, --version]
+      - cmd: [pip3, --version]
+      - cmd: [pipx, --version]
+      - cmd: [python3, -m, debugpy, --version]
+
+  - id: uv
+    name: uv (Python version & project manager)
+    category: Python
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT / Apache-2.0
+    install: {method: handler, handler: uv}
+    health: [{cmd: [uv, --version]}]
+
+  - id: poetry
+    name: Poetry
+    category: Python
+    stage: packages
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: apt, packages: [python3-poetry]}
+    health: [{cmd: [poetry, --version]}]
+
+  - id: jupyter
+    name: JupyterLab
+    category: Python
+    stage: languages
+    required: false
+    redistributable: true
+    license: BSD-3-Clause
+    install: {method: uv-tool, packages: [jupyterlab], bins: [jupyter, jupyter-lab]}
+    health: [{cmd: [jupyter-lab, --version]}]
+
+  # ---------------------------------------------------------- Java/Kotlin
+  - id: java
+    name: OpenJDK 21 LTS (default) + Maven
+    category: Java & Kotlin
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-2.0 with Classpath Exception
+    install: {method: apt, packages: [default-jdk, openjdk-21-jdk, maven]}
+    health:
+      - cmd: [java, --version]
+      - cmd: [javac, --version]
+      - cmd: [mvn, --version]
+
+  - id: temurin
+    name: Eclipse Temurin JDK 17 & 25 (additional JDKs)
+    category: Java & Kotlin
+    stage: languages
+    required: false
+    redistributable: true
+    license: GPL-2.0 with Classpath Exception
+    install: {method: handler, handler: temurin, versions: [17, 25]}
+    health:
+      - special: "path:/usr/lib/jvm/temurin-17/bin/java"
+      - special: "path:/usr/lib/jvm/temurin-25/bin/java"
+
+  - id: gradle
+    name: Gradle
+    category: Java & Kotlin
+    stage: languages
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: gradle}
+    health: [{cmd: [gradle, --version]}]
+
+  - id: kotlin
+    name: Kotlin compiler
+    category: Java & Kotlin
+    stage: languages
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: kotlin}
+    health: [{cmd: [kotlinc, -version]}]
+
+  # ---------------------------------------------------------------- C/C++
+  - id: c-cpp
+    name: C/C++ toolchain (GCC, Clang/LLVM, GDB, LLDB, CMake, Ninja, Meson, Autotools)
+    category: C & C++
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL / Apache-2.0 with LLVM exception
+    install: {method: apt, packages: [build-essential, clang, lld, llvm, gdb, lldb, cmake, ninja-build, meson, autoconf, automake, pkg-config]}
+    health:
+      - cmd: [gcc, --version]
+      - cmd: [g++, --version]
+      - cmd: [clang, --version]
+      - cmd: [gdb, --version]
+      - cmd: [lldb, --version]
+      - cmd: [cmake, --version]
+      - cmd: [ninja, --version]
+      - cmd: [meson, --version]
+      - cmd: [make, --version]
+      - cmd: [autoconf, --version]
+      - cmd: [automake, --version]
+      - cmd: [pkg-config, --version]
+
+  # ----------------------------------------------------------------- .NET
+  - id: dotnet
+    name: .NET SDK (LTS + STS) with ASP.NET Core
+    category: .NET
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: dotnet}
+    health:
+      - cmd: [dotnet, --list-sdks]
+        expect: "\\d+\\.\\d+"
+      - cmd: [dotnet, --list-runtimes]
+        expect: "Microsoft.AspNetCore.App"
+
+  - id: netcoredbg
+    name: netcoredbg (.NET debugger for VS Code/VSCodium)
+    category: .NET
+    stage: languages
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: netcoredbg}
+    health: [{cmd: [netcoredbg, --version]}]
+
+  # ----------------------------------------------------------------- Rust
+  - id: rust
+    name: Rust (rustup, rustc, cargo, rustfmt, clippy, rust-analyzer)
+    category: Rust
+    stage: languages
+    required: true
+    redistributable: true
+    license: MIT / Apache-2.0
+    install: {method: handler, handler: rust}
+    health:
+      - cmd: [rustup, --version]
+      - cmd: [rustc, --version]
+      - cmd: [cargo, --version]
+      - cmd: [rustfmt, --version]
+      - cmd: [cargo-clippy, --version]
+      - cmd: [rust-analyzer, --version]
+
+  # ------------------------------------------------------------------- Go
+  - id: go
+    name: Go (+ gopls, Delve)
+    category: Go
+    stage: languages
+    required: true
+    redistributable: true
+    license: BSD-3-Clause
+    install: {method: handler, handler: go}
+    health:
+      - cmd: [go, version]
+      - cmd: [gopls, version]
+      - cmd: [dlv, version]
+
+  # ------------------------------------------------------------------ PHP
+  - id: php
+    name: PHP CLI + Composer
+    category: PHP
+    stage: packages
+    required: true
+    redistributable: true
+    license: PHP-3.01 / MIT
+    install: {method: apt, packages: [php-cli, composer, php-mbstring, php-xml, php-curl, php-zip, php-sqlite3, php-pgsql, php-mysql, php-intl]}
+    health:
+      - cmd: [php, --version]
+      - cmd: [composer, --version]
+        expect: "Composer"
+
+  # ------------------------------------------------------------ Databases
+  - id: postgresql
+    name: PostgreSQL (server + client)
+    category: Databases
+    stage: packages
+    required: true
+    redistributable: true
+    license: PostgreSQL
+    install: {method: apt, packages: [postgresql, postgresql-client]}
+    health:
+      - cmd: [psql, --version]
+      - special: "unit:postgresql.service"
+
+  - id: mariadb
+    name: MariaDB (server + client)
+    category: Databases
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-2.0
+    install: {method: apt, packages: [mariadb-server, mariadb-client]}
+    health:
+      - cmd: [mariadb, --version]
+      - special: "unit:mariadb.service"
+
+  - id: sqlite
+    name: SQLite
+    category: Databases
+    stage: packages
+    required: true
+    redistributable: true
+    license: Public Domain
+    install: {method: apt, packages: [sqlite3]}
+    health: [{cmd: [sqlite3, --version]}]
+
+  - id: redis
+    name: Redis (server + tools)
+    category: Databases
+    stage: packages
+    required: true
+    redistributable: true
+    license: AGPL-3.0 / RSALv2 / SSPLv1 (Debian packaging)
+    install: {method: apt, packages: [redis-server, redis-tools]}
+    health:
+      - cmd: [redis-cli, --version]
+      - special: "unit:redis-server.service"
+
+  - id: dbeaver
+    name: DBeaver Community
+    category: Databases
+    stage: ides
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: apt-repo, repo: dbeaver, packages: [dbeaver-ce]}
+    health:
+      - desktop: dbeaver-ce.desktop
+      - special: "path:/usr/share/dbeaver-ce/dbeaver"
+    desktop: dbeaver-ce.desktop
+
+  # ----------------------------------------------------------- Containers
+  - id: docker
+    name: Docker Engine + Compose + Buildx
+    category: Containers
+    stage: packages
+    required: true
+    redistributable: true
+    license: Apache-2.0 (Moby)
+    install: {method: apt, packages: [docker.io, docker-compose, docker-buildx]}
+    health:
+      - cmd: [docker, --version]
+      - cmd: [docker, compose, version]
+      - special: docker
+
+  - id: podman
+    name: Podman, Buildah, Skopeo, podman-compose
+    category: Containers
+    stage: packages
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: apt, packages: [podman, buildah, skopeo, podman-compose]}
+    health:
+      - cmd: [buildah, --version]
+      - cmd: [skopeo, --version]
+      - special: podman
+
+  - id: distrobox
+    name: Distrobox
+    category: Containers
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-3.0
+    install: {method: apt, packages: [distrobox]}
+    health: [{cmd: [distrobox, version]}]
+
+  # ------------------------------------------------------- Virtualization
+  - id: kvm
+    name: KVM acceleration + QEMU + libvirt + virt-manager
+    category: Virtualization
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-2.0
+    install: {method: apt, packages: [qemu-system-x86, libvirt-daemon-system, virt-manager, virtinst, ovmf, swtpm-tools]}
+    health:
+      - cmd: [qemu-system-x86_64, --version]
+      - cmd: [virsh, --version]
+      - desktop: virt-manager.desktop
+      - special: kvm
+
+  # ------------------------------------------------------- Windows compat
+  - id: wine
+    name: Wine (+ 32-bit), Winetricks, DXVK, VKD3D
+    category: Windows Compatibility
+    stage: packages
+    required: true
+    redistributable: true
+    license: LGPL-2.1
+    install: {method: apt, packages: [wine, wine64, winetricks, dxvk]}
+    health:
+      - cmd: [wine, --version]
+      - cmd: [winetricks, --version]
+
+  - id: wine-staging
+    name: Wine Staging (WineHQ, /opt/wine-staging)
+    category: Windows Compatibility
+    stage: windows
+    required: false
+    redistributable: true
+    license: LGPL-2.1
+    install: {method: apt-repo, repo: winehq, packages: [wine-staging, wine-staging-amd64, "wine-staging-i386:i386"]}
+    health: [{cmd: [/opt/wine-staging/bin/wine, --version]}]
+
+  - id: bottles
+    name: Bottles (Wine/Proton prefixes, DXVK, VKD3D runners)
+    category: Windows Compatibility
+    stage: windows
+    required: true
+    redistributable: true
+    license: GPL-3.0
+    install: {method: flatpak, app: com.usebottles.bottles}
+    health: [{special: "flatpak:com.usebottles.bottles"}]
+    desktop: com.usebottles.bottles.desktop
+
+  # -------------------------------------------------------------- Browsers
+  - id: google-chrome
+    name: Google Chrome
+    category: Browsers
+    stage: browsers
+    required: true
+    redistributable: false
+    license: Google Chrome Terms of Service
+    license_url: https://www.google.com/chrome/terms/
+    install: {method: apt-repo, repo: google-chrome, packages: [google-chrome-stable]}
+    health:
+      - cmd: [google-chrome-stable, --version]
+      - desktop: google-chrome.desktop
+    desktop: google-chrome.desktop
+
+  - id: firefox
+    name: Firefox ESR
+    category: Browsers
+    stage: packages
+    required: false
+    redistributable: true
+    license: MPL-2.0
+    install: {method: apt, packages: [firefox-esr]}
+    health: [{cmd: [firefox-esr, --version]}]
+    desktop: firefox-esr.desktop
+
+  - id: chromium
+    name: Chromium
+    category: Browsers
+    stage: packages
+    required: false
+    redistributable: true
+    license: BSD-3-Clause
+    install: {method: apt, packages: [chromium]}
+    health: [{cmd: [chromium, --version]}]
+    desktop: chromium.desktop
+
+  # -------------------------------------------------------------- AI tools
+  - id: claude-code
+    name: Claude Code
+    category: AI Coding
+    stage: ai
+    required: true
+    redistributable: false
+    license: Anthropic Commercial / Consumer Terms
+    license_url: https://www.anthropic.com/legal/commercial-terms
+    install: {method: npm, packages: ["@anthropic-ai/claude-code"]}
+    health: [{cmd: [claude, --version]}]
+
+  - id: codex
+    name: OpenAI Codex CLI
+    category: AI Coding
+    stage: ai
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: npm, packages: ["@openai/codex"]}
+    health: [{cmd: [codex, --version]}]
+
+  - id: gemini-cli
+    name: Gemini CLI
+    category: AI Coding
+    stage: ai
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: npm, packages: ["@google/gemini-cli"]}
+    health: [{cmd: [gemini, --version]}]
+
+  - id: ollama
+    name: Ollama (local models; no model is preinstalled)
+    category: AI Coding
+    stage: ai
+    required: true
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: ollama}
+    health:
+      - cmd: [ollama, --version]
+      - special: "unit:ollama.service"
+
+  - id: llama-cpp
+    name: llama.cpp
+    category: AI Coding
+    stage: ai
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: llama_cpp}
+    health: [{cmd: [llama-cli, --version]}]
+
+  - id: aider
+    name: Aider (agent for local models via Ollama)
+    category: AI Coding
+    stage: ai
+    required: false
+    redistributable: true
+    license: Apache-2.0
+    install: {method: uv-tool, packages: [aider-chat], python: "3.12", bins: [aider]}
+    health: [{cmd: [aider, --version]}]
+
+  - id: editor-ai-extensions
+    name: Editor AI extensions (Copilot, Claude Code, Codex, Gemini for VS Code; Continue for VSCodium)
+    category: AI Coding
+    stage: ai
+    required: false
+    redistributable: false
+    license: Each extension's own license (installed per user from the official marketplaces)
+    license_url: https://aka.ms/vsmarketplace-ToU
+    install: {method: handler, handler: editor_extensions}
+    health: [{special: "editor-extensions"}]
+
+  # ------------------------------------------------------------- DevOps
+  - id: kubectl
+    name: kubectl
+    category: DevOps
+    stage: cloud
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: kubectl}
+    health: [{cmd: [kubectl, version, --client]}]
+
+  - id: helm
+    name: Helm
+    category: DevOps
+    stage: cloud
+    required: true
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: helm}
+    health: [{cmd: [helm, version, --short]}]
+
+  - id: kind
+    name: kind
+    category: DevOps
+    stage: cloud
+    required: false
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: kind}
+    health: [{cmd: [kind, version]}]
+
+  - id: minikube
+    name: minikube
+    category: DevOps
+    stage: cloud
+    required: false
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: minikube}
+    health: [{cmd: [minikube, version]}]
+
+  - id: k9s
+    name: k9s
+    category: DevOps
+    stage: cloud
+    required: false
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: k9s}
+    health: [{cmd: [k9s, version, --short]}]
+
+  - id: opentofu
+    name: OpenTofu
+    category: DevOps
+    stage: cloud
+    required: true
+    redistributable: true
+    license: MPL-2.0
+    install: {method: handler, handler: opentofu}
+    health: [{cmd: [tofu, version]}]
+
+  - id: ansible
+    name: Ansible
+    category: DevOps
+    stage: packages
+    required: false
+    redistributable: true
+    license: GPL-3.0
+    install: {method: apt, packages: [ansible]}
+    health: [{cmd: [ansible, --version]}]
+
+  # --------------------------------------------------------------- Cloud
+  - id: aws-cli
+    name: AWS CLI v2
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: true
+    license: Apache-2.0
+    install: {method: handler, handler: aws_cli}
+    health: [{cmd: [aws, --version]}]
+
+  - id: azure-cli
+    name: Azure CLI
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: uv-tool, packages: [azure-cli], python: "3.12", bins: [az]}
+    health: [{cmd: [az, version]}]
+
+  - id: gcloud
+    name: Google Cloud CLI
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: false
+    license: Google Cloud Platform Terms of Service
+    license_url: https://cloud.google.com/terms
+    install: {method: apt-repo, repo: google-cloud, packages: [google-cloud-cli]}
+    health: [{cmd: [gcloud, --version]}]
+
+  - id: cloudflared
+    name: Cloudflare cloudflared + Wrangler
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: true
+    license: Apache-2.0 / MIT
+    install: {method: apt-repo, repo: cloudflare, packages: [cloudflared], npm: [wrangler]}
+    health:
+      - cmd: [cloudflared, --version]
+      - cmd: [wrangler, --version]
+
+  - id: supabase-cli
+    name: Supabase CLI
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: handler, handler: supabase}
+    health: [{cmd: [supabase, --version]}]
+
+  - id: firebase-cli
+    name: Firebase CLI
+    category: Cloud
+    stage: cloud
+    required: false
+    redistributable: true
+    license: MIT
+    install: {method: npm, packages: [firebase-tools]}
+    health: [{cmd: [firebase, --version]}]
+
+  # ----------------------------------------------------------------- Git
+  - id: git
+    name: Git + Git LFS + GitHub CLI + GitLab CLI
+    category: Git
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-2.0 / MIT
+    install: {method: apt, packages: [git, git-lfs, gh, glab]}
+    health:
+      - cmd: [git, --version]
+      - cmd: [git, lfs, version]
+      - cmd: [gh, --version]
+
+  - id: ssh
+    name: OpenSSH, rsync, SFTP
+    category: Git
+    stage: packages
+    required: true
+    redistributable: true
+    license: BSD / GPL
+    install: {method: apt, packages: [openssh-client, rsync, lftp]}
+    health:
+      - cmd: [ssh, -V]
+      - cmd: [rsync, --version]
+
+  # ------------------------------------------------------------- System
+  - id: network
+    name: Internet connectivity (NetworkManager)
+    category: System
+    stage: packages
+    required: true
+    redistributable: true
+    license: GPL-2.0
+    install: {method: apt, packages: [network-manager]}
+    health:
+      - cmd: [nmcli, --version]
+      - special: network

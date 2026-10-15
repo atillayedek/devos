@@ -1,0 +1,36 @@
+#!/bin/sh
+# live-build configuration for DevOS Full (Debian 13 "trixie" base, amd64).
+# DEVOS_EDITION=Online|Offline selects DevOS-Full-Online.iso / DevOS-Full-Offline.iso.
+set -e
+EDITION="${DEVOS_EDITION:-Online}"
+MIRROR="${DEVOS_MIRROR:-http://deb.debian.org/debian/}"
+
+lb config noauto \
+  --mode debian \
+  --distribution trixie \
+  --architectures amd64 \
+  --archive-areas "main contrib non-free non-free-firmware" \
+  --mirror-bootstrap "$MIRROR" \
+  --mirror-chroot "$MIRROR" \
+  --mirror-binary "$MIRROR" \
+  --mirror-chroot-security "http://security.debian.org/debian-security/" \
+  --mirror-binary-security "http://security.debian.org/debian-security/" \
+  --security true \
+  --updates true \
+  --apt-recommends true \
+  --debian-installer none \
+  --binary-images iso-hybrid \
+  --bootloaders "grub-efi,syslinux" \
+  --firmware-binary true \
+  --firmware-chroot true \
+  --linux-flavours amd64 \
+  --memtest none \
+  --chroot-squashfs-compression-type zstd \
+  --iso-application "DevOS Full ${EDITION}" \
+  --iso-publisher "DevOS Project" \
+  --iso-volume "DEVOS_FULL_$(echo "$EDITION" | tr a-z A-Z)" \
+  --image-name "DevOS-Full-${EDITION}" \
+  --bootappend-live "boot=live components quiet splash username=devos hostname=devos locales=en_US.UTF-8 keyboard-layouts=us" \
+  --checksums sha256 \
+  --cache-packages true \
+  "${@}"

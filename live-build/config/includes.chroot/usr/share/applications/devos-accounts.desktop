@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Accounts & AI
+Comment=Connect GitHub, OpenAI, Anthropic, Google, cloud and other accounts (optional)
+Exec=devos-center --page accounts
+Icon=devos-accounts
+Terminal=false
+Categories=Development;Settings;
+Keywords=github;login;oauth;account;

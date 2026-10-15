@@ -1,0 +1,11 @@
+# Database workstation (services are installed but disabled at boot)
+postgresql
+postgresql-client
+postgresql-contrib
+mariadb-server
+mariadb-client
+sqlite3
+redis-server
+redis-tools
+pgcli
+mycli

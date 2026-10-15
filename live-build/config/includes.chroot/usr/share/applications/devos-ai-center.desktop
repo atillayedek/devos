@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=DevOS AI Center
+Comment=Coding agents, local models and AI accounts
+Exec=devos-center --page ai
+Icon=devos-ai
+Terminal=false
+Categories=Development;
+Keywords=ai;claude;codex;gemini;ollama;

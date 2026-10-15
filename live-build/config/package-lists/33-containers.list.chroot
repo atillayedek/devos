@@ -1,0 +1,16 @@
+# Containers: Docker Engine (Moby, Apache-2.0) + Podman stack
+docker.io
+docker-compose
+docker-buildx
+docker-cli
+golang-docker-credential-helpers
+podman
+podman-compose
+buildah
+skopeo
+distrobox
+crun
+uidmap
+slirp4netns
+passt
+fuse-overlayfs

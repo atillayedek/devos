@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Windows Application
+Comment=Run Windows programs with Wine, Bottles or the Windows VM
+Exec=devos-winapp %f
+Icon=wine
+Terminal=false
+Categories=Utility;
+NoDisplay=true
+MimeType=application/x-ms-dos-executable;application/x-msdownload;application/x-msdos-program;application/vnd.microsoft.portable-executable;application/x-msi;application/x-ms-installer;application/x-wine-extension-msi;

@@ -1,0 +1,31 @@
+[Desktop Entry]
+Type=Service
+MimeType=inode/directory;
+X-KDE-Priority=TopLevel
+X-KDE-Submenu=DevOS
+Actions=vibe;claude;codex;gemini;code
+
+[Desktop Action vibe]
+Name=Open in Vibe Coding
+Icon=devos-vibe
+Exec=devos-vibe %f
+
+[Desktop Action claude]
+Name=Open Claude Code here
+Icon=utilities-terminal
+Exec=konsole --workdir %f -e bash -lc claude
+
+[Desktop Action codex]
+Name=Open Codex here
+Icon=utilities-terminal
+Exec=konsole --workdir %f -e bash -lc codex
+
+[Desktop Action gemini]
+Name=Open Gemini CLI here
+Icon=utilities-terminal
+Exec=konsole --workdir %f -e bash -lc gemini
+
+[Desktop Action code]
+Name=Open in Visual Studio Code
+Icon=com.visualstudio.code
+Exec=code %f

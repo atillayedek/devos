@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Windows Development Environment
+Comment=Windows VM for Visual Studio and Windows-only tools
+Exec=devos-center --page windows
+Icon=devos-windows
+Terminal=false
+Categories=Development;System;
+Keywords=visual studio;windows;vm;wine;bottles;

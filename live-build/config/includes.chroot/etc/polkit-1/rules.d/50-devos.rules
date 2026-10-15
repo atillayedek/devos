@@ -1,0 +1,10 @@
+// Developers (group devos-dev) may start/stop the development services without a password.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.devos.service" && subject.local && subject.active && subject.isInGroup("devos-dev")) {
+        return polkit.Result.YES;
+    }
+    // libvirt: manage VMs (Windows Development Environment) as a developer
+    if (action.id == "org.libvirt.unix.manage" && subject.isInGroup("libvirt")) {
+        return polkit.Result.YES;
+    }
+});

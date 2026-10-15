@@ -1,0 +1,12 @@
+# Windows application compatibility (64-bit side; 32-bit installed by multiarch hook)
+wine
+wine64
+winetricks
+fonts-wine
+dxvk
+vkd3d-compiler
+libvkd3d1
+mesa-vulkan-drivers
+vulkan-tools
+cabextract
+python3-pefile

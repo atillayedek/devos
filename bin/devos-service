@@ -1,0 +1,14 @@
+#!/bin/bash
+# devos-service ACTION UNIT — start/stop/enable DevOS-managed services.
+# Invoked through pkexec; only the units below are accepted.
+set -euo pipefail
+ALLOWED="postgresql.service mariadb.service redis-server.service docker.service docker.socket libvirtd.service ollama.service"
+action="${1:-}"; unit="${2:-}"
+[[ "$unit" == *.service || "$unit" == *.socket ]] || unit="${unit}.service"
+case " $ALLOWED " in *" $unit "*) ;; *) echo "devos-service: $unit is not a DevOS-managed service" >&2; exit 2;; esac
+case "$action" in
+  start|stop|restart|enable|disable|status) ;;
+  *) echo "usage: devos-service start|stop|restart|enable|disable|status UNIT" >&2; exit 2;;
+esac
+if [[ "$action" != status && $EUID -ne 0 ]]; then exec pkexec "$0" "$action" "$unit"; fi
+exec systemctl "$action" "$unit"

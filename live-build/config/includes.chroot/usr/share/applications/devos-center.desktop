@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=DevOS Developer Center
+Comment=Manage, verify and repair your developer environment
+Exec=devos-center
+Icon=devos-center
+Terminal=false
+Categories=Development;Settings;
+Keywords=sdk;tools;health;repair;update;

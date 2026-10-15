@@ -1,0 +1,4 @@
+#!/bin/sh
+set -e
+apt-get clean
+rm -rf /var/cache/devos/downloads /root/.cache /root/.npm /tmp/* || true

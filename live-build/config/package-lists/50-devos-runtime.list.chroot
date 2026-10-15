@@ -1,0 +1,14 @@
+# Dependencies of the DevOS apps (Developer Center, Accounts & AI, Vibe Coding, Windows tools)
+python3-pyqt6
+python3-yaml
+python3-requests
+python3-keyring
+python3-secretstorage
+python3-dbus
+python3-pytest
+libsecret-tools
+kwalletmanager
+librsvg2-bin
+# Installer
+calamares
+calamares-settings-debian

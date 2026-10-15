@@ -1,0 +1,19 @@
+# KVM / QEMU / libvirt / Windows Developer VM support
+qemu-system-x86
+qemu-utils
+qemu-system-gui
+libvirt-daemon-system
+libvirt-clients
+virt-manager
+virt-viewer
+virtinst
+osinfo-db-tools
+ovmf
+swtpm
+swtpm-tools
+virtiofsd
+spice-client-gtk
+spice-vdagent
+cpu-checker
+bridge-utils
+dnsmasq-base

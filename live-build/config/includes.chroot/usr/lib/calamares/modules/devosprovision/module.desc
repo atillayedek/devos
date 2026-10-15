@@ -1,0 +1,5 @@
+---
+type:       "job"
+name:       "devosprovision"
+interface:  "python"
+script:     "main.py"

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Network & Wi-Fi
+Comment=Connect to Wi-Fi, Ethernet, VPN or a phone hotspot
+Exec=systemsettings kcm_networkmanagement
+Icon=preferences-system-network
+Terminal=false
+Categories=Settings;
+

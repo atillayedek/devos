@@ -1,0 +1,14 @@
+#!/bin/sh
+# DevOS-Full-Offline: bake every tool whose license permits redistribution into the ISO.
+# DevOS-Full-Online: these are downloaded from the vendors during installation instead.
+set -e
+[ "$(cat /etc/devos/edition)" = "Offline" ] || exit 0
+printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
+rc=0
+devos-provision --scope redistributable --offline-bundle \
+  --stages packages languages flutter containers windows ides ai cloud git environment desktop cleanup || rc=$?
+rm -f /usr/sbin/policy-rc.d
+cat /var/lib/devos/provision-report.json
+# A tool that fails to bundle is reported, and Developer Center will offer to repair it.
+exit 0

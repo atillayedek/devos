@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Vibe Coding
+Comment=Describe an app; an AI agent builds it in ~/Developer
+Exec=devos-vibe %f
+Icon=devos-vibe
+Terminal=false
+Categories=Development;IDE;
+Keywords=ai;agent;vibe;generate;

@@ -1,0 +1,30 @@
+---
+componentName:  devos
+welcomeStyleCalamares:   false
+welcomeExpandingLogo:   true
+windowExpanding:    normal
+windowSize: 1100px,720px
+windowPlacement: center
+sidebar: widget
+navigation: widget
+strings:
+    productName:         "DevOS"
+    shortProductName:    "DevOS"
+    version:             "1.0"
+    shortVersion:        "1.0"
+    versionedName:       "DevOS 1.0"
+    shortVersionedName:  "DevOS 1.0"
+    bootloaderEntryName: "DevOS"
+    productUrl:          "https://github.com/devos"
+    supportUrl:          "https://github.com/devos"
+images:
+    productLogo:         "logo.png"
+    productIcon:         "logo.png"
+    productWelcome:      "welcome.png"
+slideshow:               "show.qml"
+slideshowAPI:            2
+style:
+   SidebarBackground:        "#0b1020"
+   SidebarText:              "#ffffff"
+   SidebarTextCurrent:       "#ffffff"
+   SidebarBackgroundCurrent: "#2563eb"

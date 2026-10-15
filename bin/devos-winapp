@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+import sys
+from devos.gui.winapp_dialog import main
+sys.exit(main())

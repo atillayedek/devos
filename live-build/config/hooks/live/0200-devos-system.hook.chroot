@@ -1,0 +1,53 @@
+#!/bin/sh
+# System-wide DevOS configuration inside the live filesystem.
+set -e
+
+# Developers share writable SDK trees (Android SDK, Flutter, Rust) through this group
+getent group devos-dev >/dev/null || groupadd --system devos-dev
+install -d -m 0755 /opt/devos /var/lib/devos /var/log/devos /var/cache/devos
+
+# Branding: DevOS name on a Debian 13 base (ID stays "debian" so vendor repos/installers work)
+if [ ! -e /etc/os-release.debian ]; then
+  dpkg-divert --quiet --local --rename --divert /etc/os-release.debian --add /etc/os-release
+fi
+. /usr/lib/os-release
+cat > /etc/os-release <<OSR
+PRETTY_NAME="DevOS 1.0 (Debian ${VERSION_ID} ${VERSION_CODENAME} base)"
+NAME="DevOS"
+VERSION_ID="1.0"
+VERSION="1.0"
+VERSION_CODENAME=${VERSION_CODENAME}
+ID=debian
+DEVOS_EDITION="$(cat /etc/devos/edition)"
+HOME_URL="https://github.com/devos"
+SUPPORT_URL="https://github.com/devos"
+BUG_REPORT_URL="https://github.com/devos"
+OSR
+
+# Heavy services are installed but do not start at boot (Developer Center starts them)
+for unit in postgresql.service mariadb.service redis-server.service docker.service; do
+  systemctl disable "$unit" 2>/dev/null || true
+done
+# Docker is socket-activated: `docker` works on first use without a resident daemon
+systemctl enable docker.socket 2>/dev/null || true
+systemctl enable libvirtd.socket 2>/dev/null || true
+systemctl enable NetworkManager.service bluetooth.service cups.service 2>/dev/null || true
+systemctl set-default graphical.target
+
+# libvirt default NAT network for VMs (Windows Development Environment)
+if [ -f /etc/libvirt/qemu/networks/default.xml ]; then
+  install -d /etc/libvirt/qemu/networks/autostart
+  ln -sf ../default.xml /etc/libvirt/qemu/networks/autostart/default.xml
+fi
+
+# Flathub for Bottles and user apps (Discover)
+flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# Python package byte-compilation and desktop databases
+python3 -m compileall -q /usr/lib/python3/dist-packages/devos
+update-desktop-database -q /usr/share/applications || true
+gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+update-mime-database /usr/share/mime || true
+
+# Shared Git safe directories for group-owned SDKs
+git config --system --add safe.directory /opt/flutter

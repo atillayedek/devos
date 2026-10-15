@@ -1,0 +1,8 @@
+#!/bin/sh
+# Puts "Install DevOS" and "Network" launchers on the desktop — live session only.
+grep -qw 'boot=live' /proc/cmdline || exit 0
+DESKTOP=$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")
+mkdir -p "$DESKTOP"
+for f in devos-install.desktop devos-network.desktop devos-center.desktop; do
+  cp "/usr/share/applications/$f" "$DESKTOP/" && chmod +x "$DESKTOP/$f"
+done

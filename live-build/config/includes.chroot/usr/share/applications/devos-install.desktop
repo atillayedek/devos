@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Install DevOS
+Comment=Install DevOS Full on this computer
+Exec=pkexec calamares
+Icon=devos-install
+Terminal=false
+Categories=System;
+Keywords=installer;calamares;

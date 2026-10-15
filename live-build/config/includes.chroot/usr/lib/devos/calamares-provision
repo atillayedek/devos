@@ -1,0 +1,33 @@
+#!/bin/bash
+# Runs devos-provision inside the freshly installed target (called by the Calamares
+# devosprovision job, on the live host, as root).
+#   exit 0 = everything provisioned, 1 = some tools failed, 3 = no internet
+set -uo pipefail
+ROOT="$1"; TARGET_USER="$2"
+[ -d "$ROOT/etc" ] || { echo "invalid target root: $ROOT"; exit 2; }
+
+if ! curl -fsS -m 15 -o /dev/null https://deb.debian.org/; then
+  echo "== no internet connection: online provisioning skipped"
+  exit 3
+fi
+
+mounted=()
+for m in dev dev/pts proc sys run; do
+  if ! mountpoint -q "$ROOT/$m"; then
+    mount --bind "/$m" "$ROOT/$m" && mounted+=("$ROOT/$m")
+  fi
+done
+# give the chroot the live session's DNS (the target may have a dangling resolv.conf symlink)
+mv "$ROOT/etc/resolv.conf" "$ROOT/etc/resolv.conf.orig" 2>/dev/null
+cp -L /etc/resolv.conf "$ROOT/etc/resolv.conf"
+# never start daemons inside the chroot
+printf '#!/bin/sh\nexit 101\n' > "$ROOT/usr/sbin/policy-rc.d"; chmod +x "$ROOT/usr/sbin/policy-rc.d"
+
+chroot "$ROOT" /usr/bin/devos-provision --scope all --target-user "$TARGET_USER" \
+  --accept-licenses all --accepted-via "calamares-full-online"
+rc=$?
+
+rm -f "$ROOT/usr/sbin/policy-rc.d" "$ROOT/etc/resolv.conf"
+mv "$ROOT/etc/resolv.conf.orig" "$ROOT/etc/resolv.conf" 2>/dev/null
+for ((i=${#mounted[@]}-1; i>=0; i--)); do umount -l "${mounted[$i]}"; done
+exit $rc

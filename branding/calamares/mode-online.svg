@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <rect width="640" height="400" rx="24" fill="#1d4ed8"/>
+  <text x="40" y="80" font-family="DejaVu Sans" font-size="36" font-weight="700" fill="#fff">Full Online</text>
+  <text x="40" y="140" font-family="DejaVu Sans" font-size="22" fill="#e0e7ff">Everything ready at first login</text>
+  <text x="40" y="180" font-family="DejaVu Sans" font-size="22" fill="#e0e7ff">Chrome · VS Code · JetBrains IDEs</text>
+  <text x="40" y="220" font-family="DejaVu Sans" font-size="22" fill="#e0e7ff">Android Studio + SDK + emulator</text>
+  <text x="40" y="260" font-family="DejaVu Sans" font-size="22" fill="#e0e7ff">Claude Code · Codex · Gemini · Ollama</text>
+</svg>

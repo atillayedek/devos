@@ -1,0 +1,85 @@
+# KDE Plasma desktop + full desktop experience
+task-kde-desktop
+kde-plasma-desktop
+sddm
+sddm-theme-breeze
+plasma-workspace-wayland
+xwayland
+konsole
+yakuake
+dolphin
+dolphin-plugins
+kate
+okular
+gwenview
+ark
+kcalc
+kfind
+partitionmanager
+filelight
+ksystemlog
+plasma-systemmonitor
+kinfocenter
+kde-spectacle
+plasma-discover
+plasma-discover-backend-flatpak
+plasma-discover-backend-fwupd
+flatpak
+xdg-desktop-portal-kde
+xdg-utils
+kdialog
+libnotify-bin
+breeze-gtk-theme
+kde-config-gtk-style
+# audio/video, webcam, calls
+pipewire
+pipewire-pulse
+pipewire-alsa
+wireplumber
+pavucontrol-qt
+vlc
+mpv
+elisa
+haruna
+ffmpeg
+gstreamer1.0-plugins-good
+gstreamer1.0-plugins-bad
+gstreamer1.0-plugins-ugly
+gstreamer1.0-libav
+kamoso
+obs-studio
+v4l-utils
+# office, pdf, images
+libreoffice
+libreoffice-kf6
+libreoffice-l10n-tr
+okular-extra-backends
+krita
+imagemagick
+# printing & scanning
+cups
+cups-browsed
+printer-driver-all
+system-config-printer
+print-manager
+skanlite
+sane-utils
+# bluetooth
+bluez
+bluedevil
+# storage
+udisks2
+gvfs
+kio-extras
+kio-fuse
+# fonts
+fonts-noto
+fonts-noto-color-emoji
+fonts-jetbrains-mono
+fonts-firacode
+fonts-hack
+fonts-dejavu
+fonts-liberation2
+# browsers (redistributable)
+firefox-esr
+chromium

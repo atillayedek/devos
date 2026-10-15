@@ -1,0 +1,4 @@
+{
+  "features": { "buildkit": true },
+  "log-driver": "local"
+}
