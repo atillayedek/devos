@@ -4,7 +4,7 @@
 set -euo pipefail
 EDITION="${1:-Online}"
 [[ "$EDITION" == Online || "$EDITION" == Offline ]] || { echo "edition must be Online or Offline"; exit 2; }
-SRC=/src; WORK="/build/$EDITION"; OUT=/out
+SRC=/src; LEG=/src/legacy/linux-workstation; WORK="/build/$EDITION"; OUT=/out
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
@@ -12,19 +12,19 @@ apt-get install -y -qq live-build librsvg2-bin python3-yaml python3-pytest pytho
   dosfstools mtools ca-certificates >/dev/null
 
 echo "== running unit tests"
-(cd "$SRC" && python3 -m pytest -q -p no:cacheprovider tests)
+(cd "$LEG" && python3 -m pytest -q -p no:cacheprovider tests)
 
 echo "== preparing live-build tree in $WORK"
 mkdir -p "$WORK"
 rsync -a --delete --exclude cache --exclude chroot --exclude binary --exclude '.build' \
-  "$SRC/live-build/" "$WORK/" 
+  "$LEG/live-build/" "$WORK/" 
 INC="$WORK/config/includes.chroot"
 
 # DevOS Python package, commands and manifest
 install -d "$INC/usr/lib/python3/dist-packages" "$INC/usr/bin" "$INC/usr/share/devos/branding" "$INC/etc/devos"
-rsync -a --delete --exclude __pycache__ "$SRC/devos/" "$INC/usr/lib/python3/dist-packages/devos/"
-install -m 0755 "$SRC"/bin/* "$INC/usr/bin/"
-install -m 0644 "$SRC/provisioning/tools.yaml" "$INC/usr/share/devos/tools.yaml"
+rsync -a --delete --exclude __pycache__ "$LEG/devos/" "$INC/usr/lib/python3/dist-packages/devos/"
+install -m 0755 "$LEG"/bin/* "$INC/usr/bin/"
+install -m 0644 "$LEG/provisioning/tools.yaml" "$INC/usr/share/devos/tools.yaml"
 echo "$EDITION" > "$INC/etc/devos/edition"
 
 # Branding rendered from SVG sources

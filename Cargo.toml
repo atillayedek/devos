@@ -1,0 +1,11 @@
+# Host-side workspace (build tooling). The bootloader, kernel and userland are separate
+# workspaces because they compile for different targets; `cargo xtask` builds them.
+[workspace]
+resolver = "3"
+members = ["xtask"]
+exclude = ["boot", "kernel", "userland", "libs"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+version = "0.1.0"

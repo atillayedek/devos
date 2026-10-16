@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "DevOS build tool: language policy, build, images, QEMU"
+publish = false
+
+[dependencies]
+fatfs = "0.3"
+gpt = "4"

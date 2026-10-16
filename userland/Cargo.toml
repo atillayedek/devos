@@ -1,0 +1,12 @@
+# Native DevOS userspace (target x86_64-unknown-devos), built by `cargo xtask build`.
+[workspace]
+resolver = "3"
+members = ["init"]
+
+[profile.release]
+panic = "abort"
+opt-level = "s"
+lto = true
+
+[profile.dev]
+panic = "abort"

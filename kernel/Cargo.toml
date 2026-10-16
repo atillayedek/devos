@@ -1,0 +1,32 @@
+[package]
+name = "devos-kernel"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "The DevOS kernel"
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+test = false
+bench = false
+
+[features]
+# Kernel self-tests at boot; QEMU exits through isa-debug-exit when done.
+selftest = []
+trace-sched = []
+
+[dependencies]
+devos-bootinfo = { path = "../libs/devos-bootinfo" }
+devos-abi = { path = "../libs/devos-abi" }
+noto-sans-mono-bitmap = { version = "0.3", default-features = false, features = ["regular", "bold", "size_16", "size_20", "size_32", "unicode-basic-latin", "unicode-specials", "unicode-latin-1-supplement"] }
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+
+[profile.release]
+panic = "abort"
+debug = 1
+
+[workspace]

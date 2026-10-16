@@ -7,11 +7,10 @@ getent group devos-dev >/dev/null || groupadd --system devos-dev
 install -d -m 0755 /opt/devos /var/lib/devos /var/log/devos /var/cache/devos
 
 # Branding: DevOS name on a Debian 13 base (ID stays "debian" so vendor repos/installers work)
-if [ ! -e /etc/os-release.debian ]; then
-  dpkg-divert --quiet --local --rename --divert /etc/os-release.debian --add /etc/os-release
-fi
+# (live-build itself diverts /etc/os-release during the build and restores the
+#  symlink to /usr/lib/os-release afterwards, so the branding goes there)
 . /usr/lib/os-release
-cat > /etc/os-release <<OSR
+cat > /usr/lib/os-release.devos <<OSR
 PRETTY_NAME="DevOS 1.0 (Debian ${VERSION_ID} ${VERSION_CODENAME} base)"
 NAME="DevOS"
 VERSION_ID="1.0"
@@ -23,6 +22,7 @@ HOME_URL="https://github.com/devos"
 SUPPORT_URL="https://github.com/devos"
 BUG_REPORT_URL="https://github.com/devos"
 OSR
+mv /usr/lib/os-release.devos /usr/lib/os-release
 
 # Heavy services are installed but do not start at boot (Developer Center starts them)
 for unit in postgresql.service mariadb.service redis-server.service docker.service; do

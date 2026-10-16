@@ -1,0 +1,22 @@
+[package]
+name = "devos-boot"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "DevOS UEFI bootloader"
+
+[dependencies]
+uefi = { version = "0.41", features = ["alloc", "global_allocator", "panic_handler", "logger"] }
+xmas-elf = "0.10"
+log = "0.4"
+devos-bootinfo = { path = "../libs/devos-bootinfo" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+panic = "abort"
+
+[profile.dev]
+panic = "abort"
+
+[workspace]

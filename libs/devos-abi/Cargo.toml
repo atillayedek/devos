@@ -1,0 +1,8 @@
+[package]
+name = "devos-abi"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "DevOS system call ABI shared by the kernel and userspace"
+
+[workspace]
