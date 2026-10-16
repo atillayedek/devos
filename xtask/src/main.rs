@@ -34,8 +34,21 @@ fn cargo(dir: &str, args: &[&str]) -> Result<(), String> {
     if status.success() { Ok(()) } else { Err(format!("cargo {} failed in {dir}", args.join(" "))) }
 }
 
+/// Installs the pinned toolchain (rust-toolchain.toml) once, up front. Letting rustup install
+/// it lazily from the parallel rustc invocations of a build races and corrupts the toolchain.
+fn ensure_toolchain() -> Result<(), String> {
+    let status = Command::new("rustup")
+        .current_dir(root())
+        .env_remove("RUSTUP_TOOLCHAIN")
+        .args(["toolchain", "install"])
+        .status()
+        .map_err(|e| format!("cannot run rustup: {e}"))?;
+    if status.success() { Ok(()) } else { Err("rustup could not install the pinned toolchain".into()) }
+}
+
 pub fn build(selftest: bool) -> Result<PathBuf, String> {
     lint::run()?;
+    ensure_toolchain()?;
     cargo("boot", &["build", "--release", "--target", "x86_64-unknown-uefi"])?;
     // extra kernel features, e.g. DEVOS_KERNEL_FEATURES=trace-sched
     let mut features: Vec<String> = std::env::var("DEVOS_KERNEL_FEATURES")

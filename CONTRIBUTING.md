@@ -20,7 +20,7 @@ tests, tooling, the UI and userspace programs all need work.
 ## Development setup
 
 ```bash
-rustup show
+rustup toolchain install
 ```
 Installs the pinned nightly toolchain and targets from `rust-toolchain.toml`.
 
