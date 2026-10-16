@@ -2,7 +2,7 @@
 name = "devos-bootinfo"
 version = "0.1.0"
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 description = "Boot protocol shared by devos-boot and the DevOS kernel"
 
 [workspace]

@@ -1,55 +1,94 @@
 # DevOS
 
-DevOS, **sıfırdan yazılan kendi kernel'i olan, Rust-first bir işletim sistemidir.**
-Linux kernel'i kullanılmaz. Teknoloji yığını **Rust + x86_64 Assembly**'dir; hangi katmanda
-hangi dilin kullanılabileceği [docs/LANGUAGE-POLICY.md](docs/LANGUAGE-POLICY.md) içinde tanımlıdır
-ve her derlemede `cargo xtask lint-languages` ile zorunlu kılınır.
+**An open-source, Rust-first operating system with its own kernel — built in the open, from scratch, by anyone who wants to help.**
+
+DevOS does not use the Linux kernel. Everything — bootloader, kernel, drivers, userspace, UI —
+is new code, written primarily in **Rust**, with **x86_64 Assembly** only where the hardware
+requires it. The long-term goal is a developer-first desktop OS: a native UI toolkit (DevUI),
+developer tools, AI-assisted coding, and a hypervisor-based Linux/Windows runtime.
 
 ![DevOS boot screen](docs/images/boot-screen.png)
 
-## Bugün çalışan
+> **Status: early.** DevOS boots on UEFI x86_64 (tested in QEMU/OVMF), manages memory,
+> schedules threads preemptively and runs a ring-3 `init` process. There is no desktop,
+> filesystem, network or driver stack yet — that is exactly where contributions are needed.
+> See the [roadmap](docs/ROADMAP.md).
 
-| Katman | Durum |
+## What works today
+
+| Component | State |
 |---|---|
-| **devos-boot** (Rust, UEFI) | ESP'den `kernel.elf` + `init.elf` yükler, 4 seviyeli sayfa tablolarını kurar (identity + direct map + higher-half kernel + guard-page'li yığın), GOP framebuffer, ACPI RSDP, bellek haritası; CR3/yığın geçişi tek bir `asm!` bloğu |
-| **Kernel** (Rust + asm) | GDT/TSS (double-fault IST), IDT + assembly kesme giriş/çıkış kodu, istisna raporlama, bitmap fiziksel çerçeve ayırıcı, birleştiren serbest liste heap'i, sayfalama ve kullanıcı adres alanları, 8259 kapatma + PIT ile kalibre edilen LAPIC zamanlayıcı, assembly bağlam geçişli **preemptive** zamanlayıcı, uyku, `syscall`/`sysret` girişi (swapgs + per-CPU), ELF64 yükleyici, ring 3 süreçler, güvenli `copy_from_user`/`copy_to_user` |
-| **Syscall ABI** | `write`, `exit`, `yield`, `getpid`, `uptime_ms`, `sleep_ms`, `sysinfo` (`libs/devos-abi`) |
-| **Userspace** | `x86_64-unknown-devos` hedefi (`targets/`), `devos-rt` çalışma zamanı, ring 3'te `/devos/init` |
-| **Görüntü** | DevUI tasarım dilinde açılış ekranı: degrade arka plan, anti-aliased logo, Noto Sans Mono, canlı sistem kartı, ilerleme çubuğu, durum çubuğu |
-| **Araçlar** | `cargo xtask`: politika denetimi, derleme, FAT32 ESP + GPT disk imajı + UEFI ISO, QEMU self-test, ekran görüntüsü |
+| `boot/` — UEFI bootloader (Rust) | loads the kernel ELF + init, builds page tables (identity, direct map, higher-half kernel, guarded stack), GOP framebuffer, ACPI RSDP, memory map |
+| `kernel/` — kernel (Rust + asm) | GDT/TSS, IDT with assembly entry stubs, physical frame allocator, kernel heap, paging + user address spaces, LAPIC timer, preemptive scheduler with assembly context switch, `syscall`/`sysret`, ELF64 loader, ring-3 processes, safe user-memory copies |
+| `libs/devos-abi` | system call ABI: `write, exit, yield, getpid, uptime_ms, sleep_ms, sysinfo` |
+| `userland/` | `x86_64-unknown-devos` target, `devos-rt` runtime, `/devos/init` |
+| UI | DevUI-styled boot screen: gradient background, anti-aliased logo, live system card |
+| `xtask/` | language-policy lint, build, FAT32 ESP + GPT disk image + UEFI ISO, QEMU self-test, screenshots |
 
-## Derleme ve çalıştırma
+## Quick start
 
-Gereksinimler: Rust (`rust-toolchain.toml` nightly'yi sabitler), Docker (QEMU, OVMF ve xorriso
-`tools/Dockerfile` konteynerinde çalışır).
+Requirements: [Rust](https://rustup.rs) (the pinned nightly in `rust-toolchain.toml` installs
+automatically) and Docker (QEMU, OVMF and xorriso run in the `tools/Dockerfile` container, so
+the build works the same on Linux, macOS and Windows).
+
+```bash
+git clone https://github.com/atillayedek/devos
+```
+
+```bash
+cd devos
+```
 
 ```bash
 cargo xtask test
 ```
-Kernel self-test'leri (çerçeve ayırıcı, heap, sayfalama, zamanlayıcı) + ring 3 `init`, QEMU/UEFI'de.
+
+Builds everything and boots the self-test kernel in QEMU: frame allocator, heap, paging and
+scheduler tests, then the ring-3 `init`. Prints `SELFTEST PASSED`.
 
 ```bash
 cargo xtask run --screenshot boot.png
 ```
-`target/devos/devos.img` (GPT, `dd`/Rufus ile USB'ye yazılabilir) ve `target/devos/devos.iso`
-(UEFI El Torito, isohybrid) üretir, QEMU'da açar ve ekran görüntüsü alır.
 
-## Depo yapısı
+Produces `target/devos/devos.img` (GPT disk; write it to a USB stick with `dd`/Rufus) and
+`target/devos/devos.iso` (UEFI ISO), boots it and saves a screenshot. To try the ISO in a VM,
+use UEFI firmware (Hyper-V Generation 2 / VirtualBox "Enable EFI") with Secure Boot **off**.
+
+## Repository layout
 
 ```
-boot/            devos-boot — UEFI bootloader (Rust)
-kernel/          DevOS kernel (Rust + asm!/global_asm!)
-  src/arch/      x86_64: GDT, IDT/kesmeler, APIC, syscall girişi, seri port
-  src/mm/        fiziksel çerçeveler, heap, sayfalama
-  src/sched/     zamanlayıcı, bağlam geçişi, süreçler/ELF
-  src/ui/        framebuffer grafikleri + DevUI tasarım token'ları
-libs/            devos-bootinfo (boot protokolü), devos-abi (syscall ABI), devos-rt (userspace runtime)
-userland/        native DevOS programları (x86_64-unknown-devos)
-targets/         x86_64-unknown-devos.json
-xtask/           derleme aracı (Rust)
-tools/           QEMU/OVMF/xorriso araç konteyneri
-docs/            dil politikası, mimari, yol haritası
-legacy/          dondurulmuş Linux tabanlı ilk prototip (DevOS'un parçası değildir)
+boot/        devos-boot — UEFI bootloader
+kernel/      the kernel: arch/x86_64, mm, sched, ui
+libs/        devos-bootinfo (boot protocol), devos-abi (syscalls), devos-rt (userspace runtime)
+userland/    native DevOS programs (target x86_64-unknown-devos)
+targets/     x86_64-unknown-devos.json
+xtask/       build tool
+tools/       QEMU/OVMF/xorriso container
+docs/        language policy, architecture, roadmap
+legacy/      archived Linux-based prototype — not part of DevOS
 ```
 
-Mimari: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · Yol haritası: [docs/ROADMAP.md](docs/ROADMAP.md)
+## Contributing
+
+Everyone is welcome — first-time contributors included. Read
+[CONTRIBUTING.md](CONTRIBUTING.md), pick an issue labelled
+[`good first issue`](https://github.com/atillayedek/devos/labels/good%20first%20issue) or a
+roadmap item, and open a pull request. The project follows the
+[language policy](docs/LANGUAGE-POLICY.md): **Rust first**, Assembly only for low-level CPU work.
+
+Docs: [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) ·
+[Language policy](docs/LANGUAGE-POLICY.md) · [Security](SECURITY.md) ·
+[Code of conduct](CODE_OF_CONDUCT.md)
+
+## License
+
+[MIT](LICENSE). By contributing you agree that your contributions are licensed under the MIT license.
+
+---
+
+## Türkçe
+
+DevOS, sıfırdan yazılan kendi kernel'i olan, **Rust öncelikli açık kaynak bir işletim sistemidir**.
+Linux kernel'i kullanılmaz. Herkes katkıda bulunabilir: depoyu fork'layın, bir
+`good first issue` seçin ve pull request gönderin. Başlamak için `cargo xtask test` yeterlidir.
+Ayrıntılar: [CONTRIBUTING.md](CONTRIBUTING.md). Lisans: **MIT**.

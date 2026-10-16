@@ -5,7 +5,7 @@
 set -euo pipefail
 ISO="$1"; OUT="${2:-/out/boot-test}"; TIMEOUT="${3:-2400}"
 mkdir -p "$OUT"; rm -f "$OUT"/*
-apt-get update -qq && apt-get install -y -qq qemu-system-x86 xorriso netpbm socat >/dev/null
+command -v qemu-system-x86_64 >/dev/null || { apt-get update -qq && apt-get install -y -qq qemu-system-x86 xorriso netpbm socat >/dev/null; }
 xorriso -osirrox on -indev "$ISO" -extract /live/vmlinuz "$OUT/vmlinuz" -extract /live/initrd.img "$OUT/initrd.img" >/dev/null 2>&1
 ACCEL=tcg; [ -w /dev/kvm ] && ACCEL=kvm
 echo "accelerator: $ACCEL"

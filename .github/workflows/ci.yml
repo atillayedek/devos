@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-selftest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the pinned Rust toolchain
+        run: rustup show
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            boot/target
+            kernel/target
+            userland/target
+          key: cargo-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock') }}
+
+      - name: Language policy
+        run: cargo xtask lint-languages
+
+      - name: Build and boot the self-test kernel in QEMU
+        run: cargo xtask test
+
+      - name: Upload serial log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serial-log
+          path: target/devos/serial.log
+          if-no-files-found: ignore

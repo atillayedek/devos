@@ -2,7 +2,7 @@
 name = "devos-rt"
 version = "0.1.0"
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 description = "Minimal runtime for native DevOS programs (x86_64-unknown-devos)"
 
 [dependencies]

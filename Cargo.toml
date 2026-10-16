@@ -7,5 +7,5 @@ exclude = ["boot", "kernel", "userland", "libs"]
 
 [workspace.package]
 edition = "2024"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 version = "0.1.0"
