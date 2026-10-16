@@ -30,6 +30,7 @@ pub enum State {
 pub struct Thread {
     pub tid: u64,
     pub pid: u64,
+    #[allow(dead_code)] // shown by the upcoming process list syscall
     pub name: String,
     pub state: State,
     rsp: u64,
@@ -132,7 +133,7 @@ pub fn spawn(name: &str, pid: u64, entry: extern "C" fn(u64) -> !, arg: u64, spa
     });
     // Initial frame consumed by switch_context: rflags, r15, r14, r13, r12, rbx, rbp, ret
     let top = t.kstack_top();
-    let frame: [u64; 8] = [0x2, 0, 0, arg, entry as usize as u64, 0, 0, thread_trampoline as usize as u64];
+    let frame: [u64; 8] = [0x2, 0, 0, arg, entry as *const () as u64, 0, 0, thread_trampoline as *const () as u64];
     let rsp = top - 8 - (frame.len() as u64) * 8; // keep `ret` landing 16-byte aligned + 8
     // SAFETY: the frame fits inside the new thread's own stack.
     unsafe { core::ptr::copy_nonoverlapping(frame.as_ptr(), rsp as *mut u64, frame.len()) };

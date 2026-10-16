@@ -112,7 +112,7 @@ pub fn init() {
     // sysret: CS = base + 16, SS = base + 8 (base = user data selector - 8, RPL 3)
     let sysret_base = (USER_SS as u64 - 8) & !3 | 3;
     wrmsr(STAR, (sysret_base << 48) | ((KERNEL_CS as u64) << 32));
-    wrmsr(LSTAR, syscall_entry as usize as u64);
+    wrmsr(LSTAR, syscall_entry as *const () as u64);
     // Mask IF, TF, DF and AC on entry
     wrmsr(SFMASK, 0x200 | 0x100 | 0x400 | 0x4_0000);
 }

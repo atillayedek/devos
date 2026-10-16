@@ -142,14 +142,6 @@ impl Screen {
         self.present(Rect { x: 0, y: 0, w: self.width, h: self.height });
     }
 
-    pub fn fill(&mut self, r: Rect, c: Color) {
-        for y in r.y.max(0)..(r.y + r.h).min(self.height) {
-            for x in r.x.max(0)..(r.x + r.w).min(self.width) {
-                self.put(x, y, c);
-            }
-        }
-    }
-
     /// Anti-aliased rounded rectangle (`alpha` 0..=255 for translucency).
     pub fn rounded_rect(&mut self, r: Rect, radius: i32, c: Color, alpha: u32) {
         let rad = radius as f32;

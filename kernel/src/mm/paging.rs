@@ -156,10 +156,6 @@ impl AddressSpace {
         }
         true
     }
-
-    pub fn owned_frames(&self) -> usize {
-        self.owned.len()
-    }
 }
 
 impl Drop for AddressSpace {

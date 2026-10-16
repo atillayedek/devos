@@ -12,6 +12,7 @@ pub enum LineKind {
     Info,
     Ok,
     Warn,
+    #[allow(dead_code)] // used by upcoming fatal-error reporting
     Error,
     User,
 }

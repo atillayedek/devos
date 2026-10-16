@@ -31,6 +31,7 @@ static mut TSS: Tss = Tss { _r0: 0, rsp: [0; 3], _r1: 0, ist: [0; 7], _r2: 0, _r
 static mut GDT: [u64; 7] = [0; 7];
 
 #[repr(align(16))]
+#[allow(dead_code)] // only its address is used
 struct Stack([u8; 16 * 1024]);
 static mut DOUBLE_FAULT_STACK: Stack = Stack([0; 16 * 1024]);
 

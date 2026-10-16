@@ -13,11 +13,6 @@ pub fn phys_to_virt(phys: u64) -> u64 {
     phys + PHYS_OFFSET
 }
 
-#[inline]
-pub fn virt_to_phys_direct(virt: u64) -> u64 {
-    virt - PHYS_OFFSET
-}
-
 pub struct MemoryStats {
     pub total: u64,
     pub free: u64,

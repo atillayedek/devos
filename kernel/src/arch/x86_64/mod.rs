@@ -23,6 +23,7 @@ pub fn inb(port: u16) -> u8 {
 }
 
 #[inline]
+#[allow(dead_code)] // isa-debug-exit in self-test builds
 pub fn outl(port: u16, value: u32) {
     // SAFETY: see outb.
     unsafe { asm!("out dx, eax", in("dx") port, in("eax") value, options(nomem, nostack, preserves_flags)) }
@@ -131,6 +132,7 @@ pub fn init_cpu_features() {
 }
 
 /// QEMU `isa-debug-exit` device (only used by self-test builds).
+#[allow(dead_code)]
 pub fn qemu_exit(code: u32) -> ! {
     outl(0xF4, code);
     halt_forever()
