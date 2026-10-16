@@ -21,11 +21,21 @@ pub fn out_dir() -> PathBuf {
     root().join("target").join("devos")
 }
 
+/// The `channel` pinned in rust-toolchain.toml.
+fn pinned_toolchain() -> Result<String, String> {
+    let text = std::fs::read_to_string(root().join("rust-toolchain.toml")).map_err(|e| e.to_string())?;
+    text.lines()
+        .find_map(|l| l.trim().strip_prefix("channel").map(|v| v.trim_start_matches([' ', '=']).trim().trim_matches('"')))
+        .map(String::from)
+        .ok_or_else(|| "rust-toolchain.toml has no channel".into())
+}
+
 fn cargo(dir: &str, args: &[&str]) -> Result<(), String> {
-    let status = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()))
+    let status = Command::new("cargo")
         .current_dir(root().join(dir))
-        // the parent cargo's toolchain variables must not leak into the nested builds
-        .env_remove("RUSTUP_TOOLCHAIN")
+        // Pin every nested rustc to the same toolchain. rustup otherwise resolves the toolchain
+        // from each dependency's own directory and silently falls back to the default (stable).
+        .env("RUSTUP_TOOLCHAIN", pinned_toolchain()?)
         .env_remove("RUSTC")
         .env_remove("CARGO")
         .args(args)
